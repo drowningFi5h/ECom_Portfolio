@@ -5,6 +5,7 @@ import SplitSection from '@/components/SplitSection';
 import Services from '@/components/Services';
 import WhySection from '@/components/WhySection';
 import CTABand from '@/components/CTABand';
+import StorePromo from '@/components/StorePromo';
 import Certifications from '@/components/Certifications';
 import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
@@ -20,6 +21,7 @@ export default function Home() {
         <Services />
         <WhySection />
         <CTABand />
+        <StorePromo />
         <Certifications />
         <ContactForm />
       </main>

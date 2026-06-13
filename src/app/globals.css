@@ -534,7 +534,9 @@ textarea { resize: vertical; }
   .service-chip-grid, .cert-grid, .service-sub-groups { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+.store-promo-card-stack { display: flex; }
 @media (max-width: 680px) {
+  .store-promo-card-stack { display: none; }
   .site-header { padding: 16px 20px; }
   .main-nav { justify-content: flex-start; }
   .section-shell { width: min(100% - 28px, 1160px); }

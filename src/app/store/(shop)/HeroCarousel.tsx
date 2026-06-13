@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const SLIDES = [
@@ -13,6 +14,7 @@ const SLIDES = [
     blob1:    '#136f75',
     blob2:    '#c78336',
     accent:   '#c78b36',
+    image:    '/carousel-1.png',
   },
   {
     eyebrow:  'eCommerce Solutions',
@@ -23,6 +25,7 @@ const SLIDES = [
     blob1:    '#16a34a',
     blob2:    '#15803d',
     accent:   '#86efac',
+    image:    '/carousel-2.png',
   },
   {
     eyebrow:  'Digital Engineering',
@@ -33,6 +36,7 @@ const SLIDES = [
     blob1:    '#0e7490',
     blob2:    '#0369a1',
     accent:   '#38bdf8',
+    image:    '/carousel-3.png',
   },
   {
     eyebrow:  'Amazon Marketplace',
@@ -43,6 +47,7 @@ const SLIDES = [
     blob1:    '#4338ca',
     blob2:    '#7c3aed',
     accent:   '#a78bfa',
+    image:    '/carousel-4.png',
   },
   {
     eyebrow:  'Social Commerce',
@@ -53,6 +58,7 @@ const SLIDES = [
     blob1:    '#9333ea',
     blob2:    '#db2777',
     accent:   '#f0abfc',
+    image:    '/carousel-5.png',
   },
   {
     eyebrow:  'Media & Design',
@@ -63,6 +69,7 @@ const SLIDES = [
     blob1:    '#c2410c',
     blob2:    '#92400e',
     accent:   '#fb923c',
+    image:    '/carousel-6.png',
   },
 ];
 
@@ -101,13 +108,34 @@ export default function HeroCarousel() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}>
 
+      {/* ── Background image (cross-fades between slides) ── */}
+      <AnimatePresence>
+        <motion.div
+          key={`img-${active}`}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: 'easeInOut' }}>
+          <Image
+            src={s.image}
+            alt={s.eyebrow}
+            fill
+            priority={active === 0}
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+          />
+          {/* Dark overlay so text stays readable */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 55%, rgba(0,0,0,0.15) 100%)',
+          }} />
+        </motion.div>
+      </AnimatePresence>
+
       {/* ── Ambient blobs (CSS-transitioned) ── */}
       <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-           style={{ background: s.blob1 + '38', transition: 'background 0.8s ease' }} />
-      <div className="absolute right-20 -bottom-10 w-64 h-64 rounded-full blur-2xl pointer-events-none"
-           style={{ background: s.blob2 + '22', transition: 'background 0.8s ease' }} />
+           style={{ background: s.blob1 + '28', transition: 'background 0.8s ease' }} />
       <div className="absolute -left-10 -bottom-8 w-56 h-56 rounded-full blur-3xl pointer-events-none"
-           style={{ background: s.blob1 + '50', transition: 'background 0.8s ease' }} />
+           style={{ background: s.blob1 + '30', transition: 'background 0.8s ease' }} />
 
       {/* ── Slide content ── */}
       <AnimatePresence mode="wait">
@@ -144,7 +172,7 @@ export default function HeroCarousel() {
             {/* Body */}
             <motion.p
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.45 }}
+              animate={{ opacity: 0.7 }}
               transition={{ delay: 0.26, duration: 0.5 }}
               className="text-white text-[12px] sm:text-[13.5px] leading-relaxed max-w-[300px]"
               style={{ fontFamily: 'var(--font-sans)' }}>
@@ -163,13 +191,13 @@ export default function HeroCarousel() {
                 style={{
                   height: 3,
                   width: i === active ? 28 : 10,
-                  background: 'rgba(255,255,255,0.22)',
+                  background: 'rgba(255,255,255,0.30)',
                 }}>
                 {i === active && (
                   <motion.div
                     key={progKey}
                     className="absolute inset-y-0 left-0 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.88)' }}
+                    style={{ background: 'rgba(255,255,255,0.9)' }}
                     initial={{ width: '0%' }}
                     animate={{ width: '100%' }}
                     transition={{ duration: DURATION / 1000, ease: 'linear' }}
@@ -183,7 +211,7 @@ export default function HeroCarousel() {
       </AnimatePresence>
 
       {/* ── Slide counter ── */}
-      <div className="absolute top-4 right-5 text-white/18 font-mono text-[11px] tracking-wider pointer-events-none">
+      <div className="absolute top-4 right-5 text-white/30 font-mono text-[11px] tracking-wider pointer-events-none">
         {String(active + 1).padStart(2, '0')}&thinsp;/&thinsp;{String(SLIDES.length).padStart(2, '0')}
       </div>
 
