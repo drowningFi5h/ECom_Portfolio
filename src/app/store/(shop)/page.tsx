@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getActiveProducts } from '@/lib/store';
 import ProductGrid from './ProductGrid';
 import HeroCarousel from './HeroCarousel';
+import { CATEGORY_THEMES } from './storeThemes';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,8 @@ export default async function StorePage({
   const page       = Math.min(Math.max(1, parseInt(pageParam ?? '1', 10) || 1), totalPages);
   const paged      = all.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
+  const theme = category ? CATEGORY_THEMES[category] ?? null : null;
+
   function pageHref(p: number) {
     const params = new URLSearchParams();
     if (category) params.set('category', category);
@@ -48,6 +51,7 @@ export default async function StorePage({
 
       {/* ── Category pills ── */}
       <div className="flex flex-wrap gap-2 mb-2">
+        {/* "All" pill — active when no category is selected */}
         <Link
           href={search ? `/store?search=${encodeURIComponent(search)}` : '/store'}
           className={`h-8 px-4 inline-flex items-center rounded-full text-[13px] font-medium transition-all duration-150 ${
@@ -57,17 +61,21 @@ export default async function StorePage({
           }`}>
           All
         </Link>
+
         {CATEGORIES.map(c => {
           const href = search
             ? `/store?category=${encodeURIComponent(c)}&search=${encodeURIComponent(search)}`
             : `/store?category=${encodeURIComponent(c)}`;
+          const isActive = category === c;
+          const pillTheme = CATEGORY_THEMES[c];
           return (
             <Link key={c} href={href}
               className={`h-8 px-4 inline-flex items-center rounded-full text-[13px] font-medium transition-all duration-150 ${
-                category === c
-                  ? 'bg-[#0b3b46] text-white shadow-sm'
+                isActive
+                  ? 'shadow-sm text-white'
                   : 'bg-white border border-stone-200 text-stone-600 hover:border-stone-300 hover:text-stone-900'
-              }`}>
+              }`}
+              style={isActive && pillTheme ? { background: pillTheme.bg } : undefined}>
               {c}
             </Link>
           );
@@ -85,7 +93,8 @@ export default async function StorePage({
         {hasFilter && (
           <Link
             href="/store"
-            className="text-[12.5px] text-[#0b3b46] font-semibold hover:underline underline-offset-2 transition-all">
+            className="text-[12.5px] font-semibold hover:underline underline-offset-2 transition-all"
+            style={{ color: theme?.accent ?? '#0b3b46' }}>
             Clear filters
           </Link>
         )}
@@ -97,7 +106,6 @@ export default async function StorePage({
       {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-center gap-2 mt-12">
-          {/* Prev */}
           <Link
             href={pageHref(page - 1)}
             aria-disabled={page === 1}
@@ -110,7 +118,6 @@ export default async function StorePage({
             Prev
           </Link>
 
-          {/* Page numbers */}
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
             .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
@@ -127,15 +134,15 @@ export default async function StorePage({
                   href={pageHref(item)}
                   className={`h-9 w-9 flex items-center justify-center rounded-xl text-[13px] font-medium border transition-colors ${
                     item === page
-                      ? 'bg-[#0b3b46] text-white border-[#0b3b46] shadow-sm'
+                      ? 'text-white border-transparent shadow-sm'
                       : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300 hover:text-stone-900 hover:bg-stone-50'
-                  }`}>
+                  }`}
+                  style={item === page ? { background: theme?.bg ?? '#0b3b46', borderColor: 'transparent' } : undefined}>
                   {item}
                 </Link>
               )
             )}
 
-          {/* Next */}
           <Link
             href={pageHref(page + 1)}
             aria-disabled={page === totalPages}

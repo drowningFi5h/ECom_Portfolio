@@ -17,14 +17,14 @@ const links = [
   { href: '/store/account', label: 'Account settings', icon: Settings      },
 ];
 
-export default function StoreMobileNav() {
+export default function StoreMobileNav({ dark }: { dark?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="sm:hidden p-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors rounded-lg"
+        className={`sm:hidden p-2 transition-colors rounded-lg ${dark ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'}`}
         aria-label="Open menu">
         <Menu className="h-6 w-6" />
       </button>

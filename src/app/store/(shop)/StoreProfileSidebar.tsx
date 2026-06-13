@@ -8,7 +8,7 @@ import { User, X, Receipt, Settings, LogOut, MessageCircle } from 'lucide-react'
 const WHATSAPP_NUMBER = '919263699286';
 const WHATSAPP_MESSAGE = encodeURIComponent('Hi! I need help with my RBS Store order.');
 
-export default function StoreProfileSidebar() {
+export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,7 +17,11 @@ export default function StoreProfileSidebar() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open profile"
-        className="flex items-center justify-center h-8 w-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 transition-colors border border-stone-200">
+        className={`flex items-center justify-center h-8 w-8 rounded-full transition-colors border ${
+          dark
+            ? 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white border-white/15'
+            : 'bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 border-stone-200'
+        }`}>
         <User className="h-[18px] w-[18px]" />
       </button>
 
