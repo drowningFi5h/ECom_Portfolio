@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Image from 'next/image';
 
@@ -9,13 +9,15 @@ const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
 type Mode = 'signin' | 'signup';
 
-export default function StoreLoginPage() {
+function StoreLoginForm() {
   const [mode, setMode] = useState<Mode>('signin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [gstError, setGstError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get('next') ?? '/store';
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +36,7 @@ export default function StoreLoginPage() {
     if (mode === 'signin') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
-      router.push('/store');
+      router.push(nextUrl);
       router.refresh();
     } else {
       const name          = fd.get('name')          as string;
@@ -299,6 +301,18 @@ export default function StoreLoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function StoreLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f6f3ee] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#0b3b46] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <StoreLoginForm />
+    </Suspense>
   );
 }
 

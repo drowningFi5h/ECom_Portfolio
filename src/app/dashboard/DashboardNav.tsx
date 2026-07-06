@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Package, ShoppingBag, ClipboardList } from 'lucide-react';
+import { Inbox, Package, ShoppingBag, ClipboardList, Bot } from 'lucide-react';
 
 const links = [
   { href: '/dashboard',               label: 'Submissions',  icon: Inbox          },
   { href: '/dashboard/products',      label: 'Products',     icon: Package        },
   { href: '/dashboard/orders',        label: 'Orders',       icon: ShoppingBag    },
   { href: '/dashboard/bulk-orders',   label: 'Bulk Orders',  icon: ClipboardList  },
+  { href: '/dashboard/amazon',        label: 'Amazon',       icon: Bot            },
 ];
 
 export default function DashboardNav() {

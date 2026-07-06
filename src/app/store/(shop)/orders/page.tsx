@@ -1,4 +1,5 @@
 ﻿import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { PackageOpen } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { adminGetBuyerOrders, formatPrice } from '@/lib/store';
@@ -17,7 +18,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default async function OrdersPage() {
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user) redirect('/store/login?next=/store/orders');
 
   const { data: orders } = await adminGetBuyerOrders(user.id);
   const list = orders ?? [];

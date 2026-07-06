@@ -31,7 +31,12 @@ export default function AddToCart({ product, variants }: Props) {
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to add to cart');
+        const msg = e instanceof Error ? e.message : 'Failed to add to cart';
+        if (msg === 'Not authenticated') {
+          window.location.href = `/store/login?next=${window.location.pathname}`;
+          return;
+        }
+        setError(msg);
       }
     });
   }

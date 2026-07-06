@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { User, Mail, Shield } from 'lucide-react';
 import AddressForm from './AddressForm';
@@ -6,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user) redirect('/store/login?next=/store/account');
 
   const joinedDate = new Date(user.created_at).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',

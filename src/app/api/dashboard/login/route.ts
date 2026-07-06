@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json();
-  const expected = process.env.DASHBOARD_PASSWORD;
+  const { username, password } = await req.json();
 
-  if (!expected) {
-    return NextResponse.json({ error: 'DASHBOARD_PASSWORD not set' }, { status: 500 });
+  const validUser = process.env.DASHBOARD_ADMIN_USER;
+  const validPass = process.env.DASHBOARD_ADMIN_PASS;
+  const secret    = process.env.DASHBOARD_SESSION_SECRET;
+
+  if (!validUser || !validPass || !secret) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-  if (password !== expected) {
-    return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
+
+  if (username?.trim() !== validUser || password !== validPass) {
+    return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set('rbs-auth', expected, {
+  res.cookies.set('dash_session', secret, {
     httpOnly: true,
     sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    secure: process.env.NODE_ENV === 'production',
+    path: '/dashboard',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
   });
   return res;
 }

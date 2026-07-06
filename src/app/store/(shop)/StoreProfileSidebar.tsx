@@ -1,19 +1,55 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { User, X, Receipt, Settings, LogOut, MessageCircle } from 'lucide-react';
+import { User, X, Receipt, Settings, LogOut, MessageCircle, LogIn } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 
 const WHATSAPP_NUMBER = '919263699286';
 const WHATSAPP_MESSAGE = encodeURIComponent('Hi! I need help with my RBS Store order.');
 
+type AuthUser = {
+  email?: string;
+  user_metadata?: { full_name?: string };
+} | null;
+
 export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]     = useState(false);
+  const [user, setUser]     = useState<AuthUser>(null);
+  const [loaded, setLoaded] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    );
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoaded(true);
+    });
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    );
+    await supabase.auth.signOut();
+    setOpen(false);
+    router.push('/store/login');
+    router.refresh();
+  }
+
+  const displayName = user?.user_metadata?.full_name
+    || user?.email?.split('@')[0]
+    || 'My Account';
 
   return (
     <>
-      {/* Trigger — profile icon button in header */}
+      {/* Trigger — profile icon in header */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Open profile"
@@ -51,12 +87,16 @@ export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-[#0b3b46]/10 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-full bg-[#0b3b46]/10 flex items-center justify-center shrink-0">
                     <User className="h-4 w-4 text-[#0b3b46]" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-stone-900 leading-tight">My Account</p>
-                    <p className="text-[11px] text-stone-400 leading-tight mt-0.5">RBS Store</p>
+                    <p className="text-[13px] font-semibold text-stone-900 leading-tight">
+                      {!loaded ? '…' : user ? displayName : 'Guest'}
+                    </p>
+                    <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
+                      {loaded && user ? user.email : 'RBS Store'}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -68,8 +108,25 @@ export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
 
               {/* Nav */}
               <nav className="flex-1 px-3 py-4 space-y-0.5">
-                <SidebarLink href="/store/orders" icon={Receipt} label="My Orders" sub="Track and view past orders" onClick={() => setOpen(false)} />
-                <SidebarLink href="/store/account" icon={Settings} label="Account Settings" sub="Update profile and preferences" onClick={() => setOpen(false)} />
+                {user ? (
+                  <>
+                    <SidebarLink href="/store/orders"  icon={Receipt}  label="My Orders"        sub="Track and view past orders"        onClick={() => setOpen(false)} />
+                    <SidebarLink href="/store/account" icon={Settings} label="Account Settings" sub="Update profile and preferences"    onClick={() => setOpen(false)} />
+                  </>
+                ) : loaded ? (
+                  <Link
+                    href="/store/login"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl bg-[#0b3b46] hover:bg-[#0d4a57] transition-colors">
+                    <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                      <LogIn className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-medium text-white leading-tight">Sign in</p>
+                      <p className="text-[11px] text-white/60 leading-tight mt-0.5">Access your account</p>
+                    </div>
+                  </Link>
+                ) : null}
               </nav>
 
               {/* WhatsApp CTA */}
@@ -78,7 +135,7 @@ export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
                   href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 w-full rounded-xl bg-[#25D366] hover:bg-[#20bc5a] active:bg-[#1aab50] px-4 py-3.5 transition-colors group">
+                  className="flex items-center gap-3 w-full rounded-xl bg-[#25D366] hover:bg-[#20bc5a] active:bg-[#1aab50] px-4 py-3.5 transition-colors">
                   <MessageCircle className="h-5 w-5 text-white shrink-0" />
                   <div>
                     <p className="text-[13px] font-semibold text-white leading-tight">Chat on WhatsApp</p>
@@ -87,17 +144,17 @@ export default function StoreProfileSidebar({ dark }: { dark?: boolean }) {
                 </a>
               </div>
 
-              {/* Sign out */}
-              <div className="px-3 pb-6 border-t border-stone-100 pt-3">
-                <form action="/api/store/logout" method="POST">
+              {/* Sign out — only when logged in */}
+              {user && (
+                <div className="px-3 pb-6 border-t border-stone-100 pt-3">
                   <button
-                    type="submit"
+                    onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors text-[13px] font-medium">
                     <LogOut className="h-3.5 w-3.5" />
                     Sign out
                   </button>
-                </form>
-              </div>
+                </div>
+              )}
 
             </motion.aside>
           </motion.div>

@@ -1,24 +1,44 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, Package, ClipboardList, Receipt, LogOut, Settings, MessageCircle } from 'lucide-react';
+import { Menu, X, Package, ClipboardList, Receipt, LogOut, Settings, MessageCircle, LogIn } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 import SearchBar from './SearchBar';
 
 const WHATSAPP_NUMBER  = '919263699286';
 const WHATSAPP_MESSAGE = encodeURIComponent('Hi! I need help with my RBS Store order.');
 
-const links = [
-  { href: '/store',         label: 'Products',         icon: Package       },
-  { href: '/store/orders',  label: 'My orders',        icon: Receipt       },
-  { href: '/store/cart',    label: 'Bulk list',        icon: ClipboardList },
-  { href: '/store/account', label: 'Account settings', icon: Settings      },
-];
-
 export default function StoreMobileNav({ dark }: { dark?: boolean }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]     = useState(false);
+  const [user, setUser]     = useState<{ email?: string } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    );
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoaded(true);
+    });
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    );
+    await supabase.auth.signOut();
+    setOpen(false);
+    router.push('/store/login');
+    router.refresh();
+  }
 
   return (
     <>
@@ -71,16 +91,14 @@ export default function StoreMobileNav({ dark }: { dark?: boolean }) {
 
               {/* Nav links */}
               <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-                {links.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors text-[14px] font-medium">
-                    <Icon className="h-[15px] w-[15px] text-stone-400 shrink-0" />
-                    {label}
-                  </Link>
-                ))}
+                <NavLink href="/store" icon={Package} label="Products" onClick={() => setOpen(false)} />
+                <NavLink href="/store/cart" icon={ClipboardList} label="Bulk list" onClick={() => setOpen(false)} />
+                {user && (
+                  <>
+                    <NavLink href="/store/orders"  icon={Receipt}  label="My orders"        onClick={() => setOpen(false)} />
+                    <NavLink href="/store/account" icon={Settings} label="Account settings"  onClick={() => setOpen(false)} />
+                  </>
+                )}
               </nav>
 
               {/* WhatsApp CTA */}
@@ -98,16 +116,27 @@ export default function StoreMobileNav({ dark }: { dark?: boolean }) {
                 </a>
               </div>
 
-              {/* Sign out */}
+              {/* Auth footer */}
               <div className="px-3 pb-6 border-t border-stone-100 pt-3">
-                <form action="/api/store/logout" method="POST">
-                  <button
-                    type="submit"
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors text-[13px] font-medium">
-                    <LogOut className="h-[14px] w-[14px]" />
-                    Sign out
-                  </button>
-                </form>
+                {!loaded ? null : user ? (
+                  <>
+                    <p className="text-[11px] text-stone-400 px-4 mb-2 truncate">{user.email}</p>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors text-[13px] font-medium">
+                      <LogOut className="h-[14px] w-[14px]" />
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/store/login"
+                    onClick={() => setOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#0b3b46] text-white text-[13px] font-medium hover:bg-[#0d4a57] transition-colors">
+                    <LogIn className="h-[14px] w-[14px]" />
+                    Sign in to your account
+                  </Link>
+                )}
               </div>
 
             </motion.div>
@@ -115,5 +144,17 @@ export default function StoreMobileNav({ dark }: { dark?: boolean }) {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function NavLink({ href, icon: Icon, label, onClick }: { href: string; icon: React.ElementType; label: string; onClick: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-3 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors text-[14px] font-medium">
+      <Icon className="h-[15px] w-[15px] text-stone-400 shrink-0" />
+      {label}
+    </Link>
   );
 }

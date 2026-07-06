@@ -101,7 +101,7 @@ export default function HeroCarousel() {
     <div
       className="relative overflow-hidden rounded-2xl mt-6 mb-8 select-none"
       style={{
-        height: 'clamp(240px, 30vw, 340px)',
+        height: 'clamp(312px, 39vw, 442px)',
         backgroundColor: s.bg,
         transition: 'background-color 0.8s cubic-bezier(0.4,0,0.2,1)',
       }}

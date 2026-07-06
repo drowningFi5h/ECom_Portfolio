@@ -17,6 +17,19 @@
   --font-sans:  var(--font-dm-sans), var(--font-jakarta), ui-sans-serif, sans-serif;
 }
 
+/* ── Amazon dashboard palette ─────────────────────────────────────────── */
+:root {
+  --amz-cream:        #FDF8F0;
+  --amz-beige:        #F2EBD9;
+  --amz-beige-border: #E4D9C4;
+  --amz-teal:         #7BA7A4;
+  --amz-teal-dark:    #5A8C89;
+  --amz-teal-light:   #EAF3F2;
+  --amz-charcoal:     #3E4449;
+  --amz-charcoal-soft:#6B7278;
+  --amz-charcoal-muted:#9CA3AF;
+}
+
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
