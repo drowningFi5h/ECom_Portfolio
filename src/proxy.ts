@@ -1,23 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { verifySession } from '@/lib/management-session';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Dashboard — cookie-based session (single admin account)
-  if (pathname.startsWith('/dashboard')) {
-    if (pathname === '/dashboard/login') return NextResponse.next();
+  // Management portal — role-based auth
+  if (pathname.startsWith('/management')) {
+    if (pathname === '/management/login') return NextResponse.next();
 
-    const session = req.cookies.get('dash_session')?.value;
-    const secret  = process.env.DASHBOARD_SESSION_SECRET;
+    const secret = process.env.DASHBOARD_SESSION_SECRET ?? '';
 
-    if (!session || !secret || session !== secret) {
-      const loginUrl = new URL('/dashboard/login', req.url);
-      loginUrl.searchParams.set('next', pathname);
-      return NextResponse.redirect(loginUrl);
+    // 1. Hardcoded admin (full access to everything)
+    const adminSession = req.cookies.get('dash_session')?.value;
+    if (adminSession && adminSession === secret) return NextResponse.next();
+
+    // 2. Role-based session
+    const roleSession = req.cookies.get('mgmt_session')?.value;
+    if (roleSession) {
+      const payload = await verifySession(roleSession, secret);
+      if (payload) {
+        const allowed = payload.allowedPaths.some(
+          p => pathname === p || pathname.startsWith(p + '/'),
+        );
+        if (allowed) return NextResponse.next();
+        // Logged in but path not in their role — send to their landing page
+        const landing = payload.allowedPaths[0] ?? '/management/login';
+        return NextResponse.redirect(new URL(landing, req.url));
+      }
     }
 
-    return NextResponse.next();
+    const loginUrl = new URL('/management/login', req.url);
+    loginUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Store — only cart/orders/account require auth; browsing is public
@@ -55,5 +70,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/store', '/store/:path*'],
+  matcher: ['/management/:path*', '/store', '/store/:path*'],
 };

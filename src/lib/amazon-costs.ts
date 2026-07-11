@@ -7,14 +7,58 @@
  *   COGS       = (Weight_kg × ratePerKg) × 1.3   ← 30% overhead
  */
 
-export const GSM_CONFIGS: Record<string, { label: string; totalGsm: number }> = {
-  '150_3ply': { label: '150 GSM · 3-ply (Light)',    totalGsm: 510  },
-  '150_5ply': { label: '150 GSM · 5-ply (Standard)', totalGsm: 870  },
-  '150_7ply': { label: '150 GSM · 7-ply (Heavy)',    totalGsm: 1230 },
-  '180_3ply': { label: '180 GSM · 3-ply (Light)',    totalGsm: 612  },
-  '180_5ply': { label: '180 GSM · 5-ply (Standard)', totalGsm: 1044 },
-  '180_7ply': { label: '180 GSM · 7-ply (Heavy)',    totalGsm: 1476 },
+// Liner GSM options — ply count is parsed from SKU; total GSM is computed via calcTotalGsm()
+export const GSM_LINER_OPTIONS = [140, 180] as const;
+export type LinerGsm = typeof GSM_LINER_OPTIONS[number];
+
+export const GSM_CONFIGS: Record<string, { label: string; linerGsm?: number; totalGsm?: number }> = {
+  '140': { label: '140 GSM', linerGsm: 140 },
+  '180': { label: '180 GSM', linerGsm: 180 },
+  // Legacy keys — kept so saved Finance/Costs data doesn't break
+  '150_3ply': { label: '150 GSM · 3-ply', totalGsm: 510  },
+  '150_5ply': { label: '150 GSM · 5-ply', totalGsm: 870  },
+  '150_7ply': { label: '150 GSM · 7-ply', totalGsm: 1230 },
+  '180_3ply': { label: '180 GSM · 3-ply', totalGsm: 612  },
+  '180_5ply': { label: '180 GSM · 5-ply', totalGsm: 1044 },
+  '180_7ply': { label: '180 GSM · 7-ply', totalGsm: 1476 },
 };
+
+/**
+ * Total board GSM from liner GSM × ply count.
+ * 3-ply = 2 liners + 1 fluted medium (factor 1.4)  → multiplier 3.4
+ * 5-ply = 3 liners + 2 flutes                      → multiplier 5.8
+ * 7-ply = 4 liners + 3 flutes                      → multiplier 8.2
+ * Verified: 180 × 3.4 = 612, × 5.8 = 1044, × 8.2 = 1476 (match legacy entries)
+ */
+export function calcTotalGsm(linerGsm: number, ply: number): number {
+  const flutes = (ply - 1) / 2;
+  const liners = (ply + 1) / 2;
+  return linerGsm * (liners + flutes * 1.4);
+}
+
+/** Extract PLY count (3/5/7) from SKU — e.g. "3PL" → 3. Defaults to 3. */
+export function parsePly(sku: string): number {
+  const m = sku.match(/(\d)PL/i);
+  const p = m ? parseInt(m[1]) : 3;
+  return [3, 5, 7].includes(p) ? p : 3;
+}
+
+/**
+ * Parse box dimensions (inches) from either SKU format:
+ *   Old: AAA-3PLBrown01-T2-0400X0400X0400-PO010  → 4-digit ÷ 100 → 4×4×4
+ *   New: IN-3PL-BR-06X05X03-PO035#...            → direct → 6×5×3
+ */
+export function parseSize(sku: string): { h: number; b: number; l: number } | null {
+  const oldM = sku.match(/(\d{4})X(\d{4})X(\d{4})/i);
+  if (oldM) {
+    return { h: parseInt(oldM[1]) / 100, b: parseInt(oldM[2]) / 100, l: parseInt(oldM[3]) / 100 };
+  }
+  const newM = sku.split('#')[0].match(/(\d+)X(\d+)X(\d+)/i);
+  if (newM) {
+    return { h: parseInt(newM[1]), b: parseInt(newM[2]), l: parseInt(newM[3]) };
+  }
+  return null;
+}
 
 /**
  * Extract pack quantity from a product title.
@@ -161,7 +205,9 @@ export function costBreakdown(
   const dims = resolveDims(sku, boxH, boxB, boxL);
   if (!dims) return null;
 
-  const { cogs, weightKg } = calcBoxCost(dims.h, dims.b, dims.l, GSM_CONFIGS[gsmConfig].totalGsm, ratePerKg);
+  const cfg = GSM_CONFIGS[gsmConfig];
+  const totalGsm = cfg.totalGsm ?? calcTotalGsm(cfg.linerGsm!, parsePly(sku));
+  const { cogs, weightKg } = calcBoxCost(dims.h, dims.b, dims.l, totalGsm, ratePerKg);
   const pf           = packerFee(sp);
   const manufacturingTotal = cogs + pf;
 

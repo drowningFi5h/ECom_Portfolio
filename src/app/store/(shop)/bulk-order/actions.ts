@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { revalidatePath } from 'next/cache';
 import { adminInsertBulkOrder } from '@/lib/store';
@@ -34,6 +34,6 @@ export async function submitBulkOrder(data: {
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath('/dashboard/bulk-orders');
+  revalidatePath('/management/bulk-orders');
   return { success: true };
 }
