@@ -503,8 +503,7 @@ function BreakdownPanel({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x"
-        style={{ divideColor: 'var(--amz-beige-border)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-[var(--amz-beige-border)]">
 
         {/* ── Manufacturing ── */}
         <div className="p-5">
